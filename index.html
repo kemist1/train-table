@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Train Table</title>
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+  <script src="https://cdn.firebase.com/js/client/2.4.1/firebase.js"></script>
+  <script src="http://momentjs.com/downloads/moment.js"></script>
+
+</head>
+<body>
+
+<div class ="container">
+   <div class="jumbotron" style ="background-color:blue;">
+      <h1 class ="text-center" style="color:white;">Train Schedule</h1>
+       
+   </div>
+   <div class="panel panel-default" >
+       <div class="panel-heading" style ="background-color:#165CAB;">
+          <h3 class="panel-title" style ="color:white;">Current Train Schedule</h3>
+       </div>
+  <div class="panel-body">
+       <table class="table table-striped" id="trainTable">
+    <thead>
+      <tr>
+        <th>Train name</th>
+        <th>Destination</th>
+        <th>Frequency(min)</th>
+        <th>Next Arrival</th>
+        <th>Minutes Away</th>
+        
+      </tr>
+    </thead>
+    <tbody >
+    
+    
+     
+    </tbody>
+  </table>
+  </div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading" style ="background-color:#165CAB;">
+    <h3 class="panel-title" style ="color:white;">Add Train</h3>
+  </div>
+  <div class="panel-body">
+    <form role="form">
+  <div class="form-group">
+    <label for="name">Train Name</label>
+    <input type="text" class="form-control" id="trainName">
+  </div>
+  <div class="form-group">
+    <label for="pwd">Destination</label>
+    <input type="text" class="form-control" id="destination">
+  </div>
+  <div class="form-group">
+    <label for="pwd">First Train Time(HH:mm - military time)</label>
+    <input type="text" class="form-control" id="firstTrain">
+  </div>
+  <div class="form-group">
+    <label for="pwd">Frequency (min)</label>
+    <input type="text" class="form-control" id="frequency">
+  </div>
+  
+  <button type="submit" class="btn btn-default" style ="background-color:#165CAB;color:white;" id="addTrain">Submit</button>
+</form>
+
+
+</div>
+    
+  </div>
+</div>
+</div>
+
+<script src="https://code.jquery.com/jquery.js"></script>
+
+<script>
+var dataRef = new Firebase("https://train-table.firebaseio.com/");
+var trainName = "";
+var destination = "";
+var firstTrain = "";
+var frequency = "";
+
+$("#addTrain").on("click", function() {
+  
+  
+    trainName = $('#trainName').val().trim();
+    destination = $('#destination').val().trim();
+    firstTrain = $('#firstTrain').val().trim();
+    frequency = $('#frequency').val().trim();
+    
+    dataRef.push({
+      trainName: trainName,
+      destination: destination,
+      firstTrain: firstTrain,
+      frequency: frequency,
+      
+      
+    })
+    
+  $(".form-control").val("");
+  
+  return false;
+  
+});
+  
+dataRef.on("child_added", function(childSnapshot){
+  console.log(childSnapshot.val());
+  var trainName = childSnapshot.val().trainName;
+  var destination = childSnapshot.val().destination;
+  var firstTrain = childSnapshot.val().firstTrain;
+  var frequency = childSnapshot.val().frequency;
+  console.log(trainName);
+  console.log(destination);
+  console.log(firstTrain);
+  console.log(frequency); 
+  
+  
+  $("#trainName").html(childSnapshot.val().trainName);
+  $("#destination").html(childSnapshot.val().destination);
+  $("#firstTrain").html(childSnapshot.val().firstTrain);
+  $("#frequency").html(childSnapshot.val().frequency);
+  var firstTimeConverted = moment(firstTrain,"hh:mm").subtract(1,"years");
+       console.log(firstTimeConverted);
+    
+    var currentTime = moment();
+       console.log("CURRENT TIME: " + moment(currentTime).format ("hh:mm"));
+     
+    var diffTime = moment().diff(moment(firstTimeConverted),"minutes");
+       console.log("DIFFERENCE IN TIME: " + diffTime);   
+     
+    var tRemainder = diffTime % frequency ;
+       console.log(tRemainder);
+     
+    var minutesAway = frequency - tRemainder;
+       console.log("MINUTES TILL TRAIN : " + minutesAway) ;
+       
+   
+    var next = moment().add(minutesAway, "minutes");
+       console.log("ARRIVAL TIME: " + moment(next).format("HH:mm"));       
+        
+    var nextArrival = moment(next).format("HH:mm"); 
+ 
+  $("#trainTable > tbody").append("<tr><td>" + trainName + "</td><td>" + destination + "</td><td>" + frequency + "</td><td>" + nextArrival + "</td><td>" + minutesAway + "</td></tr>");
+
+}, function(errorObject){
+  console.log("Errors handled: " + errorObject.code)
+}) 
+</script>
+  
+</body>
+</html>
